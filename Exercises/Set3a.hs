@@ -124,7 +124,7 @@ capitalize s = unwords (map capitalizeFirst (words s))
 --   * the function takeWhile
 
 powers :: Int -> Int -> [Int]
-powers k max = todo
+powers k max = takeWhile (<= max) (iterate (*k) 1)
 
 ------------------------------------------------------------------------------
 -- Ex 7: implement a functional while loop. While should be a function
@@ -147,7 +147,9 @@ powers k max = todo
 --     ==> Avvt
 
 while :: (a->Bool) -> (a->a) -> a -> a
-while check update value = todo
+while check update value 
+  | check value = while check update (update value)
+  | otherwise   = value
 
 ------------------------------------------------------------------------------
 -- Ex 8: another version of a while loop. This time, the check
@@ -167,7 +169,9 @@ while check update value = todo
 -- Hint! Remember the case-of expression from lecture 2.
 
 whileRight :: (a -> Either b a) -> a -> b
-whileRight check x = todo
+whileRight check x = case check x of
+  Left result    -> result
+  Right nextVal  -> whileRight check nextVal
 
 -- for the whileRight examples:
 -- step k x doubles x if it's less than k
@@ -191,7 +195,7 @@ bomb x = Right (x-1)
 -- Hint! This is a great use for list comprehensions
 
 joinToLength :: Int -> [String] -> [String]
-joinToLength = todo
+joinToLength target xs = [ x ++ y | x <- xs, y <- xs, x /= y, length x + length y == target ]
 
 ------------------------------------------------------------------------------
 -- Ex 10: implement the operator +|+ that returns a list with the first
@@ -205,6 +209,12 @@ joinToLength = todo
 --   [] +|+ [True]        ==> [True]
 --   [] +|+ []            ==> []
 
+
+(+|+) :: [a] -> [a] -> [a]
+[] +|+ []         = []
+(x:_) +|+ []      = [x]
+[] +|+ (y:_)      = [y]
+(x:_) +|+ (y:_)   = [x,y]
 
 ------------------------------------------------------------------------------
 -- Ex 11: remember the lectureParticipants example from Lecture 2? We
@@ -221,7 +231,7 @@ joinToLength = todo
 --   sumRights [Left "bad!", Left "missing"]         ==>  0
 
 sumRights :: [Either a Int] -> Int
-sumRights = todo
+sumRights xs = sum (map (either (const 0) id) xs)
 
 ------------------------------------------------------------------------------
 -- Ex 12: recall the binary function composition operation
@@ -237,8 +247,9 @@ sumRights = todo
 --   multiCompose [(3*), (2^), (+1)] 0 ==> 6
 --   multiCompose [(+1), (2^), (3*)] 0 ==> 2
 
-multiCompose fs = todo
-
+multiCompose :: [a -> a] -> (a -> a)
+multiCompose []     = id
+multiCompose (f:fs) = f . multiCompose fs
 ------------------------------------------------------------------------------
 -- Ex 13: let's consider another way to compose multiple functions. Given
 -- some function f, a list of functions gs, and some value x, define
@@ -258,8 +269,8 @@ multiCompose fs = todo
 --   multiApp id [head, (!!2), last] "axbxc" ==> ['a','b','c'] i.e. "abc"
 --   multiApp sum [head, (!!2), last] [1,9,2,9,3] ==> 6
 
-multiApp = todo
-
+multiApp :: ([b] -> c) -> [a -> b] -> a -> c
+multiApp f gs x = f (map (\g -> g x) gs)
 ------------------------------------------------------------------------------
 -- Ex 14: in this exercise you get to implement an interpreter for a
 -- simple language. You should keep track of the x and y coordinates,
@@ -293,4 +304,15 @@ multiApp = todo
 -- function, the surprise won't work. See section 3.8 in the material.
 
 interpreter :: [String] -> [String]
-interpreter commands = todo
+interpreter commands = go 0 0 commands
+  where
+    -- go x y remainingCommands
+    go x y [] = []
+    go x y (c:cs)
+      | c == "up"     = go x (y+1) cs
+      | c == "down"   = go x (y-1) cs
+      | c == "left"   = go (x-1) y cs
+      | c == "right"  = go (x+1) y cs
+      | c == "printX" = show x : go x y cs
+      | c == "printY" = show y : go x y cs
+      | otherwise     = go x y cs
