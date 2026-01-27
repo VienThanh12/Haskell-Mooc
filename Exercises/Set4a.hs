@@ -1,4 +1,5 @@
 
+
 -- Exercise set 4a:
 --
 --  * using type classes
